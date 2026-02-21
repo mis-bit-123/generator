@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import type { InvoiceData, InvoiceItem } from '@/types/invoice';
 import { formatCurrency, numberToWords } from '@/utils/calculations';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,11 @@ interface ClassicInvoiceProps {
   onExportPDF: () => void;
 }
 
-const LOGO_URL = 'https://i.imghippo.com/files/RfC9405A.jpg ';
-const FOOTER_URL = 'https://i.imghippo.com/files/mFd4056UY.png ';
+const LOGO_URL = 'https://i.imghippo.com/files/RfC9405A.jpg';
+const FOOTER_URL = 'https://i.imghippo.com/files/mFd4056UY.png';
 
 const STAMP_OPTIONS = [
+  { value: 'default', label: 'Default (Sweta Harit Sharma)', file: null },
   { value: 'riya', label: 'Riya', file: 'riya-stamp.jpg' },
   { value: 'sh', label: 'SH', file: 'sh-stamp.jpg' },
   { value: 'hp', label: 'HP', file: 'hp-stamp.jpg' },
@@ -26,7 +27,7 @@ const STAMP_OPTIONS = [
 
 export default function ClassicInvoice({ data, onDataChange, onExportPDF }: ClassicInvoiceProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
-  const [selectedStamp, setSelectedStamp] = useState<string>('');
+  const [selectedStamp, setSelectedStamp] = useState<string>('default');
 
   const updateItem = (id: string, field: keyof InvoiceItem, value: string | number) => {
     const updatedItems = data.items.map(item => {
@@ -46,14 +47,22 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
   };
 
   const calculateTotals = (items: InvoiceItem[]) => {
-    const basicAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const gstAmount = Math.round(basicAmount * (data.gstRate / 100));
-    const netAmount = basicAmount + gstAmount;
+    // Calculate basic amount from regular items only
+    const regularItems = items.filter(item => !item.isDiscount);
+    const discountItems = items.filter(item => item.isDiscount);
+    
+    const basicAmount = regularItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const discountAmount = discountItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    
+    // Subtract discount from basic amount
+    const taxableAmount = basicAmount - discountAmount;
+    const gstAmount = Math.round(taxableAmount * (data.gstRate / 100));
+    const netAmount = taxableAmount + gstAmount;
     
     onDataChange({
       ...data,
       items,
-      basicAmount,
+      basicAmount: taxableAmount,
       gstAmount,
       netAmount,
       amountInWords: numberToWords(netAmount),
@@ -103,9 +112,13 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
   const updateField = (field: keyof InvoiceData, value: string | number) => {
     if (field === 'gstRate') {
       const newData = { ...data, gstRate: value as number };
-      const basicAmount = data.items.reduce((sum, item) => sum + (item.amount || 0), 0);
-      const gstAmount = Math.round(basicAmount * ((value as number) / 100));
-      const netAmount = basicAmount + gstAmount;
+      const regularItems = data.items.filter(item => !item.isDiscount);
+      const discountItems = data.items.filter(item => item.isDiscount);
+      const basicAmount = regularItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const discountAmount = discountItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const taxableAmount = basicAmount - discountAmount;
+      const gstAmount = Math.round(taxableAmount * ((value as number) / 100));
+      const netAmount = taxableAmount + gstAmount;
       onDataChange({
         ...newData,
         gstAmount,
@@ -147,17 +160,23 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
   };
 
   const getStampUrl = () => {
-    if (!selectedStamp) return null;
+    if (!selectedStamp || selectedStamp === 'default') return null;
     const stamp = STAMP_OPTIONS.find(s => s.value === selectedStamp);
-    return stamp ? `src/components/img/${stamp.file}` : null;
+    return stamp?.file ? `src/components/img/${stamp.file}` : null;
   };
 
   const gstOptions = Array.from({ length: 100 }, (_, i) => i + 1);
 
+  // Calculate display values
+  const regularItems = data.items.filter(item => !item.isDiscount);
+  const discountItems = data.items.filter(item => item.isDiscount);
+  const grossAmount = regularItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const discountAmount = discountItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+
   return (
     <div className="classic-invoice-container">
       {/* Export Button - Web Only */}
-      <div className="flex justify-end mb-4 no-print gap-2">
+      <div className="flex justify-end mb-4 no-print gap-2 flex-wrap">
         <div className="flex items-center gap-2 mr-4">
           <span className="text-sm font-medium">GST Rate:</span>
           <Select value={data.gstRate.toString()} onValueChange={(v) => updateField('gstRate', parseInt(v))}>
@@ -174,7 +193,7 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
         <div className="flex items-center gap-2 mr-4">
           <span className="text-sm font-medium">Stamp:</span>
           <Select value={selectedStamp} onValueChange={handleStampChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
@@ -248,52 +267,68 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
         <div className="party-section">
           <div className="party-box">
             <div className="party-title">Buyer's Name & Address</div>
-            <Input
-              value={data.buyerName}
-              onChange={(e) => handleBuyerChange('buyerName', e.target.value)}
-              className="party-input party-name"
-              placeholder="M/s. Company Name"
-            />
-            <Textarea
-              value={data.buyerAddress}
-              onChange={(e) => handleBuyerChange('buyerAddress', e.target.value)}
-              className="party-input party-address"
-              placeholder="Full Address"
-              rows={3}
-            />
-            <div className="gst-row">
-              <span className="gst-label">GST No.:</span>
+            <div className="party-content">
+              <div className="party-line">{data.buyerName || 'M/s. Company Name'}</div>
+              <div className="party-address-text">{data.buyerAddress || 'Full Address'}</div>
+              <div className="party-gst">GST No.: {data.buyerGstNo || '##XXXXXXXXXX#X#'}</div>
+            </div>
+            {/* Hidden inputs for web editing */}
+            <div className="no-print party-inputs">
               <Input
-                value={data.buyerGstNo}
-                onChange={(e) => handleBuyerChange('buyerGstNo', e.target.value)}
-                className="gst-input"
-                placeholder="##XXXXXXXXXX#X#"
+                value={data.buyerName}
+                onChange={(e) => handleBuyerChange('buyerName', e.target.value)}
+                className="party-input party-name"
+                placeholder="M/s. Company Name"
               />
+              <Textarea
+                value={data.buyerAddress}
+                onChange={(e) => handleBuyerChange('buyerAddress', e.target.value)}
+                className="party-input party-address"
+                placeholder="Full Address"
+                rows={3}
+              />
+              <div className="gst-row">
+                <span className="gst-label">GST No.:</span>
+                <Input
+                  value={data.buyerGstNo}
+                  onChange={(e) => handleBuyerChange('buyerGstNo', e.target.value)}
+                  className="gst-input"
+                  placeholder="##XXXXXXXXXX#X#"
+                />
+              </div>
             </div>
           </div>
           <div className="party-box">
-            <div className="party-title">Consginee's Name & Address:</div>
-            <Input
-              value={data.consigneeName}
-              onChange={(e) => updateField('consigneeName', e.target.value)}
-              className="party-input party-name"
-              placeholder="M/s. Company Name"
-            />
-            <Textarea
-              value={data.consigneeAddress}
-              onChange={(e) => updateField('consigneeAddress', e.target.value)}
-              className="party-input party-address"
-              placeholder="Full Address"
-              rows={3}
-            />
-            <div className="gst-row">
-              <span className="gst-label">GST No.:</span>
+            <div className="party-title">Consignee's Name & Address:</div>
+            <div className="party-content">
+              <div className="party-line">{data.consigneeName || 'M/s. Company Name'}</div>
+              <div className="party-address-text">{data.consigneeAddress || 'Full Address'}</div>
+              <div className="party-gst">GST No.: {data.consigneeGstNo || '##XXXXXXXXXX#X#'}</div>
+            </div>
+            {/* Hidden inputs for web editing */}
+            <div className="no-print party-inputs">
               <Input
-                value={data.consigneeGstNo}
-                onChange={(e) => updateField('consigneeGstNo', e.target.value)}
-                className="gst-input"
-                placeholder="##XXXXXXXXXX#X#"
+                value={data.consigneeName}
+                onChange={(e) => updateField('consigneeName', e.target.value)}
+                className="party-input party-name"
+                placeholder="M/s. Company Name"
               />
+              <Textarea
+                value={data.consigneeAddress}
+                onChange={(e) => updateField('consigneeAddress', e.target.value)}
+                className="party-input party-address"
+                placeholder="Full Address"
+                rows={3}
+              />
+              <div className="gst-row">
+                <span className="gst-label">GST No.:</span>
+                <Input
+                  value={data.consigneeGstNo}
+                  onChange={(e) => updateField('consigneeGstNo', e.target.value)}
+                  className="gst-input"
+                  placeholder="##XXXXXXXXXX#X#"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -323,47 +358,57 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                       <Input
                         value={item.discountLabel || ''}
                         onChange={(e) => updateItem(item.id, 'discountLabel', e.target.value)}
-                        className="table-input discount-label"
+                        className="table-input discount-label no-print"
                       />
                     ) : (
                       <Textarea
                         value={item.itemDetails}
                         onChange={(e) => updateItem(item.id, 'itemDetails', e.target.value)}
-                        className="table-input item-details"
+                        className="table-input item-details no-print"
                         rows={2}
                         placeholder="Enter item details..."
                       />
                     )}
+                    <span className="print-only">{item.isDiscount ? item.discountLabel : item.itemDetails}</span>
                   </td>
                   <td className="col-uom">
                     {!item.isDiscount && (
-                      <Input
-                        value={item.uom}
-                        onChange={(e) => updateItem(item.id, 'uom', e.target.value)}
-                        className="table-input"
-                      />
+                      <>
+                        <Input
+                          value={item.uom}
+                          onChange={(e) => updateItem(item.id, 'uom', e.target.value)}
+                          className="table-input no-print"
+                        />
+                        <span className="print-only">{item.uom}</span>
+                      </>
                     )}
                   </td>
                   <td className="col-qty">
                     {!item.isDiscount && (
-                      <Input
-                        type="number"
-                        value={item.qty === undefined || item.qty === null ? '' : item.qty}
-                        onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                        className="table-input"
-                        placeholder=""
-                      />
+                      <>
+                        <Input
+                          type="number"
+                          value={item.qty === undefined || item.qty === null ? '' : item.qty}
+                          onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          className="table-input no-print"
+                          placeholder=""
+                        />
+                        <span className="print-only">{item.qty}</span>
+                      </>
                     )}
                   </td>
                   <td className="col-rate">
                     {!item.isDiscount && (
-                      <Input
-                        type="number"
-                        value={item.rate === undefined || item.rate === null ? '' : item.rate}
-                        onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                        className="table-input"
-                        placeholder=""
-                      />
+                      <>
+                        <Input
+                          type="number"
+                          value={item.rate === undefined || item.rate === null ? '' : item.rate}
+                          onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          className="table-input no-print"
+                          placeholder=""
+                        />
+                        <span className="print-only">{item.rate}</span>
+                      </>
                     )}
                   </td>
                   <td className="col-amount">
@@ -371,9 +416,12 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                       type="number"
                       value={item.amount === 0 ? '' : item.amount}
                       onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                      className={`table-input ${item.isDiscount ? 'discount-amount' : ''}`}
+                      className={`table-input ${item.isDiscount ? 'discount-amount' : ''} no-print`}
                       placeholder=""
                     />
+                    <span className={`print-only ${item.isDiscount ? 'discount-text' : ''}`}>
+                      {formatCurrency(item.amount)}
+                    </span>
                   </td>
                   <td className="col-action no-print">
                     <Button
@@ -414,32 +462,36 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                 <Input
                   value={data.bankDetails.companyName}
                   onChange={(e) => updateNestedField('bankDetails', 'companyName', e.target.value)}
-                  className="bank-input"
+                  className="bank-input no-print"
                 />
+                <span className="print-only bank-value">{data.bankDetails.companyName}</span>
               </div>
               <div className="bank-row">
                 <span className="bank-label">- Our Current A/C No.:</span>
                 <Input
                   value={data.bankDetails.accountNo}
                   onChange={(e) => updateNestedField('bankDetails', 'accountNo', e.target.value)}
-                  className="bank-input"
+                  className="bank-input no-print"
                 />
+                <span className="print-only bank-value">{data.bankDetails.accountNo}</span>
               </div>
               <div className="bank-row">
                 <span className="bank-label">- Branch Name:</span>
                 <Input
                   value={data.bankDetails.branchName}
                   onChange={(e) => updateNestedField('bankDetails', 'branchName', e.target.value)}
-                  className="bank-input"
+                  className="bank-input no-print"
                 />
+                <span className="print-only bank-value">{data.bankDetails.branchName}</span>
               </div>
               <div className="bank-row">
                 <span className="bank-label">- RTGS / IFS Code:</span>
                 <Input
                   value={data.bankDetails.ifscCode}
                   onChange={(e) => updateNestedField('bankDetails', 'ifscCode', e.target.value)}
-                  className="bank-input"
+                  className="bank-input no-print"
                 />
+                <span className="print-only bank-value">{data.bankDetails.ifscCode}</span>
               </div>
             </div>
             
@@ -449,24 +501,27 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                 <Input
                   value={data.paymentTerms.payment}
                   onChange={(e) => updateNestedField('paymentTerms', 'payment', e.target.value)}
-                  className="term-input"
+                  className="term-input no-print"
                 />
+                <span className="print-only term-value">{data.paymentTerms.payment}</span>
               </div>
               <div className="term-row">
                 <span className="term-label">Insurance:</span>
                 <Input
                   value={data.paymentTerms.insurance}
                   onChange={(e) => updateNestedField('paymentTerms', 'insurance', e.target.value)}
-                  className="term-input"
+                  className="term-input no-print"
                 />
+                <span className="print-only term-value">{data.paymentTerms.insurance}</span>
               </div>
               <div className="term-row">
                 <span className="term-label">Freight:</span>
                 <Input
                   value={data.paymentTerms.freight}
                   onChange={(e) => updateNestedField('paymentTerms', 'freight', e.target.value)}
-                  className="term-input"
+                  className="term-input no-print"
                 />
+                <span className="print-only term-value">{data.paymentTerms.freight}</span>
               </div>
             </div>
           </div>
@@ -475,14 +530,20 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
             <div className="summary-table">
               <div className="summary-row">
                 <span className="summary-label">Basic Amount</span>
+                <span className="summary-value">{formatCurrency(grossAmount)}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div className="summary-row discount-summary">
+                  <span className="summary-label">Less: Discount</span>
+                  <span className="summary-value discount-value">-{formatCurrency(discountAmount)}</span>
+                </div>
+              )}
+              <div className="summary-row">
+                <span className="summary-label">Taxable Amount</span>
                 <span className="summary-value">{formatCurrency(data.basicAmount)}</span>
               </div>
-              <div className="summary-row gst-row-web no-print">
+              <div className="summary-row">
                 <span className="summary-label">GST @ {data.gstRate}%</span>
-                <span className="summary-value">{formatCurrency(data.gstAmount)}</span>
-              </div>
-              <div className="summary-row gst-row-print print-only">
-                <span className="summary-label">GST @ 18%</span>
                 <span className="summary-value">{formatCurrency(data.gstAmount)}</span>
               </div>
               <div className="summary-row total-row">
@@ -507,24 +568,27 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
               <Input
                 value={data.companyInfo.gstNo}
                 onChange={(e) => updateNestedField('companyInfo', 'gstNo', e.target.value)}
-                className="company-info-input"
+                className="company-info-input no-print"
               />
+              <span className="print-only company-value">{data.companyInfo.gstNo}</span>
             </div>
             <div className="company-info-row">
               <span className="info-label">State Code:</span>
               <Input
                 value={data.companyInfo.stateCode}
                 onChange={(e) => updateNestedField('companyInfo', 'stateCode', e.target.value)}
-                className="company-info-input"
+                className="company-info-input no-print"
               />
+              <span className="print-only company-value">{data.companyInfo.stateCode}</span>
             </div>
             <div className="company-info-row">
               <span className="info-label">CIN:</span>
               <Input
                 value={data.companyInfo.cin}
                 onChange={(e) => updateNestedField('companyInfo', 'cin', e.target.value)}
-                className="company-info-input"
+                className="company-info-input no-print"
               />
+              <span className="print-only company-value">{data.companyInfo.cin}</span>
             </div>
           </div>
           <div className="footer-right">

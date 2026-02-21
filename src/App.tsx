@@ -206,6 +206,18 @@ function App() {
       const noPrintElements = clone.querySelectorAll('.no-print');
       noPrintElements.forEach(el => el.remove());
 
+      // Show print-only elements
+      const printOnlyElements = clone.querySelectorAll('.print-only');
+      printOnlyElements.forEach((el: any) => {
+        el.style.display = 'block';
+      });
+
+      // Fix party content for PDF
+      const partyContents = clone.querySelectorAll('.party-content');
+      partyContents.forEach((el: any) => {
+        el.style.display = 'block';
+      });
+
       // Fix inputs to show as text in PDF
       const inputs = clone.querySelectorAll('input, textarea');
       inputs.forEach((input: any) => {
@@ -213,13 +225,14 @@ function App() {
         const span = document.createElement('span');
         span.textContent = value;
         span.style.fontFamily = 'Arial, sans-serif';
-        span.style.fontSize = input.classList.contains('party-name') ? '12px' : '12px';
+        span.style.fontSize = '10px';
         span.style.fontWeight = input.classList.contains('party-name') ? 'bold' : 'normal';
         span.style.display = 'inline-block';
         span.style.padding = '2px 0';
-        span.style.minHeight = '20px';
+        span.style.minHeight = '16px';
         span.style.whiteSpace = 'pre-wrap';
         span.style.wordWrap = 'break-word';
+        span.style.width = '100%';
         input.parentNode?.replaceChild(span, input);
       });
 
@@ -328,7 +341,7 @@ function App() {
           <style>
             @page {
               size: A4;
-              margin: 5mm;
+              margin: 8mm;
             }
             
             * {
@@ -339,7 +352,7 @@ function App() {
             
             body {
               font-family: 'Arial', sans-serif;
-              font-size: 12px;
+              font-size: 11px;
               color: #000;
               line-height: 1.4;
               background: white;
@@ -348,38 +361,26 @@ function App() {
             }
             
             .print-container {
-              width: 200mm;
-              min-height: 287mm;
+              width: 194mm;
+              min-height: 279mm;
               margin: 0 auto;
               background: white;
-              padding: 10mm;
+              padding: 0;
             }
             
             .no-print, .calculator-widget, .calculator-toggle {
               display: none !important;
             }
             
-            input, textarea {
-              border: none !important;
-              background: transparent !important;
-              padding: 0 !important;
-              resize: none !important;
-              overflow: visible !important;
-              font-family: 'Arial', sans-serif !important;
-              font-size: 11px !important;
-              width: auto !important;
-              outline: none !important;
+            .print-only {
+              display: block !important;
             }
             
-            .gst-row-web {
+            input, textarea {
               display: none !important;
             }
             
-            .gst-row-print {
-              display: flex !important;
-            }
-            
-            /* Copy all CSS from App.css for print */
+            /* Invoice styles */
             .classic-invoice {
               width: 100% !important;
               transform: none !important;
@@ -390,23 +391,23 @@ function App() {
             
             .invoice-logo-section {
               text-align: right;
-              padding: 10px 20px 10px 0;
+              padding: 10px 15px 10px 0;
               border-bottom: 2px solid #c41e3a;
             }
             
             .invoice-logo {
-              max-width: 350px;
+              max-width: 280px;
               height: auto;
             }
             
             .invoice-title-section {
               text-align: center;
-              padding: 15px 0;
+              padding: 12px 0;
               border-bottom: 1px solid #000;
             }
             
             .invoice-title {
-              font-size: 18px;
+              font-size: 16px;
               font-weight: bold;
               margin: 0;
               letter-spacing: 2px;
@@ -415,7 +416,7 @@ function App() {
             .invoice-header-info {
               display: flex;
               justify-content: space-between;
-              padding: 10px;
+              padding: 8px 10px;
               border-bottom: 1px solid #000;
             }
             
@@ -426,15 +427,16 @@ function App() {
             .info-row {
               display: flex;
               align-items: center;
-              margin-bottom: 5px;
+              margin-bottom: 4px;
             }
             
             .info-label {
               font-weight: bold;
-              min-width: 140px;
-              font-size: 11px;
+              min-width: 120px;
+              font-size: 10px;
             }
             
+            /* Party section */
             .party-section {
               display: flex;
               border-bottom: 1px solid #000;
@@ -442,8 +444,9 @@ function App() {
             
             .party-box {
               flex: 1;
-              padding: 10px;
+              padding: 8px 10px;
               border-right: 1px solid #000;
+              min-height: 100px;
             }
             
             .party-box:last-child {
@@ -452,31 +455,40 @@ function App() {
             
             .party-title {
               font-weight: bold;
-              font-size: 11px;
-              margin-bottom: 8px;
+              font-size: 10px;
+              margin-bottom: 6px;
+              color: #333;
             }
             
-            .party-input {
-              width: 100%;
-              margin-bottom: 5px;
+            .party-content {
+              display: block !important;
             }
             
-            .party-name {
+            .party-inputs {
+              display: none !important;
+            }
+            
+            .party-line {
               font-weight: bold;
+              font-size: 10px;
+              margin-bottom: 3px;
+              line-height: 1.3;
             }
             
-            .gst-row {
-              display: flex;
-              align-items: center;
-              margin-top: 5px;
+            .party-address-text {
+              font-size: 9px;
+              line-height: 1.4;
+              margin-bottom: 6px;
+              white-space: pre-line;
             }
             
-            .gst-label {
+            .party-gst {
+              font-size: 9px;
               font-weight: bold;
-              font-size: 11px;
-              margin-right: 5px;
+              margin-top: 4px;
             }
             
+            /* Table */
             .items-table {
               width: 100%;
               border-collapse: collapse;
@@ -485,25 +497,36 @@ function App() {
             .items-table th {
               background-color: #f5f5f5;
               border: 1px solid #000;
-              padding: 8px 5px;
-              font-size: 11px;
+              padding: 5px 3px;
+              font-size: 9px;
               font-weight: bold;
               text-align: center;
             }
             
             .items-table td {
               border: 1px solid #000;
-              padding: 5px;
+              padding: 3px;
               vertical-align: top;
+              font-size: 9px;
             }
             
             .col-no { width: 5%; text-align: center; }
-            .col-item { width: 45%; text-align: left; }
-            .col-uom { width: 8%; text-align: center; }
+            .col-item { width: 40%; text-align: left; }
+            .col-uom { width: 10%; text-align: center; }
             .col-qty { width: 10%; text-align: center; }
-            .col-rate { width: 15%; text-align: right; }
-            .col-amount { width: 17%; text-align: right; }
+            .col-rate { width: 17%; text-align: right; }
+            .col-amount { width: 18%; text-align: right; }
             
+            .discount-row {
+              background-color: #fff8e1;
+            }
+            
+            .discount-text {
+              color: #c41e3a;
+              font-weight: bold;
+            }
+            
+            /* Bottom section */
             .bottom-section {
               display: flex;
               border-bottom: 1px solid #000;
@@ -511,38 +534,88 @@ function App() {
             
             .bottom-left {
               flex: 1.2;
-              padding: 10px;
+              padding: 8px 10px;
               border-right: 1px solid #000;
             }
             
             .bottom-right {
               flex: 0.8;
-              padding: 10px;
+              padding: 8px 10px;
+            }
+            
+            .bank-row {
+              display: flex;
+              align-items: center;
+              margin-bottom: 2px;
+            }
+            
+            .bank-label {
+              font-size: 8px;
+              min-width: 110px;
+            }
+            
+            .bank-value {
+              font-size: 8px;
+              flex: 1;
+            }
+            
+            .term-row {
+              display: flex;
+              align-items: center;
+              margin-bottom: 2px;
+            }
+            
+            .term-label {
+              font-weight: bold;
+              font-size: 8px;
+              min-width: 55px;
+            }
+            
+            .term-value {
+              font-size: 8px;
+              flex: 1;
             }
             
             .summary-row {
               display: flex;
               justify-content: space-between;
-              padding: 6px 0;
+              padding: 3px 0;
               border-bottom: 1px solid #ddd;
+              font-size: 9px;
+            }
+            
+            .discount-summary {
+              color: #c41e3a;
+            }
+            
+            .discount-value {
+              color: #c41e3a;
+              font-weight: bold;
             }
             
             .total-row {
               border-top: 2px solid #000;
               border-bottom: none;
-              padding-top: 8px;
-              margin-top: 5px;
+              padding-top: 5px;
+              margin-top: 3px;
+              font-weight: bold;
             }
             
             .amount-words-section {
-              padding: 10px;
+              padding: 8px 10px;
               border-bottom: 1px solid #000;
               background-color: #f9f9f9;
+              font-size: 10px;
+            }
+            
+            .amount-words-label {
+              font-weight: bold;
+              margin-right: 8px;
             }
             
             .footer-info-section {
               display: flex;
-              padding: 10px;
+              padding: 8px 10px;
               border-bottom: 1px solid #000;
             }
             
@@ -554,20 +627,57 @@ function App() {
               align-items: flex-end;
             }
             
+            .company-info-row {
+              display: flex;
+              align-items: center;
+              margin-bottom: 2px;
+            }
+            
+            .company-info-row .info-label {
+              min-width: 65px;
+              font-size: 8px;
+            }
+            
+            .company-value {
+              font-size: 8px;
+            }
+            
             .signature-section {
               text-align: center;
             }
             
+            .for-company {
+              font-weight: bold;
+              font-size: 9px;
+              margin-bottom: 8px;
+            }
+            
+            .signature-name {
+              font-size: 10px;
+              font-weight: bold;
+              margin-bottom: 4px;
+            }
+            
+            .signature-line {
+              width: 120px;
+              border-top: 1px solid #000;
+              margin: 0 auto 4px;
+            }
+            
+            .signature-label {
+              font-size: 8px;
+            }
+            
             .stamp-image {
-              max-width: 120px;
-              max-height: 80px;
+              max-width: 80px;
+              max-height: 60px;
               object-fit: contain;
-              margin-bottom: 5px;
+              margin-bottom: 4px;
             }
             
             .footer-image-section {
               width: 100%;
-              margin-top: 10px;
+              margin-top: 5px;
             }
             
             .footer-image {
@@ -589,6 +699,12 @@ function App() {
           </div>
           <script>
             window.onload = function() {
+              // Hide inputs and show print-only content
+              document.querySelectorAll('input, textarea').forEach(el => el.style.display = 'none');
+              document.querySelectorAll('.party-content').forEach(el => el.style.display = 'block');
+              document.querySelectorAll('.print-only').forEach(el => el.style.display = 'block');
+              document.querySelectorAll('.party-inputs').forEach(el => el.style.display = 'none');
+              
               setTimeout(function() {
                 window.print();
                 window.close();
@@ -604,7 +720,6 @@ function App() {
 
   const toggleCalculator = () => {
     if (!showCalculator) {
-      // Center calculator initially
       setCalculatorPosition({
         x: window.innerWidth / 2 - 140,
         y: window.innerHeight / 2 - 200
