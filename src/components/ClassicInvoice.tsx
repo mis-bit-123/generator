@@ -1,9 +1,10 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { InvoiceData, InvoiceItem } from '@/types/invoice';
 import { formatCurrency, numberToWords } from '@/utils/calculations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Download } from 'lucide-react';
 
 interface ClassicInvoiceProps {
@@ -12,31 +13,46 @@ interface ClassicInvoiceProps {
   onExportPDF: () => void;
 }
 
-const LOGO_URL = 'https://i.imghippo.com/files/RfC9405A.jpg';
-const FOOTER_URL = 'https://i.imghippo.com/files/rtrV3514D.jpg';
+const LOGO_URL = 'https://i.imghippo.com/files/RfC9405A.jpg ';
+const FOOTER_URL = 'https://i.imghippo.com/files/mFd4056UY.png ';
+
+const STAMP_OPTIONS = [
+  { value: 'riya', label: 'Riya', file: 'riya-stamp.jpg' },
+  { value: 'sh', label: 'SH', file: 'sh-stamp.jpg' },
+  { value: 'hp', label: 'HP', file: 'hp-stamp.jpg' },
+  { value: 'shivani', label: 'Shivani', file: 'shivani-stamp.jpg' },
+  { value: 'sss', label: 'SSS', file: 'sss-stamp.jpg' },
+];
 
 export default function ClassicInvoice({ data, onDataChange, onExportPDF }: ClassicInvoiceProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const [selectedStamp, setSelectedStamp] = useState<string>('');
 
   const updateItem = (id: string, field: keyof InvoiceItem, value: string | number) => {
     const updatedItems = data.items.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'qty' || field === 'rate') {
-          updatedItem.amount = updatedItem.qty * updatedItem.rate;
+          const qty = field === 'qty' ? (value as number) || 0 : updatedItem.qty || 0;
+          const rate = field === 'rate' ? (value as number) || 0 : updatedItem.rate || 0;
+          updatedItem.amount = qty * rate;
         }
         return updatedItem;
       }
       return item;
     });
     
-    const basicAmount = updatedItems.reduce((sum, item) => sum + item.amount, 0);
+    calculateTotals(updatedItems);
+  };
+
+  const calculateTotals = (items: InvoiceItem[]) => {
+    const basicAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
     const gstAmount = Math.round(basicAmount * (data.gstRate / 100));
     const netAmount = basicAmount + gstAmount;
     
     onDataChange({
       ...data,
-      items: updatedItems,
+      items,
       basicAmount,
       gstAmount,
       netAmount,
@@ -50,8 +66,8 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
       no: data.items.filter(i => !i.isDiscount).length + 1,
       itemDetails: '',
       uom: 'Nos.',
-      qty: 1,
-      rate: 0,
+      qty: undefined as any,
+      rate: undefined as any,
       amount: 0,
     };
     onDataChange({ ...data, items: [...data.items, newItem] });
@@ -74,7 +90,6 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
 
   const removeItem = (id: string) => {
     const updatedItems = data.items.filter(item => item.id !== id);
-    // Renumber items
     let itemNo = 1;
     updatedItems.forEach(item => {
       if (!item.isDiscount) {
@@ -82,22 +97,24 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
       }
     });
     
-    const basicAmount = updatedItems.reduce((sum, item) => sum + item.amount, 0);
-    const gstAmount = Math.round(basicAmount * (data.gstRate / 100));
-    const netAmount = basicAmount + gstAmount;
-    
-    onDataChange({
-      ...data,
-      items: updatedItems,
-      basicAmount,
-      gstAmount,
-      netAmount,
-      amountInWords: numberToWords(netAmount),
-    });
+    calculateTotals(updatedItems);
   };
 
-  const updateField = (field: keyof InvoiceData, value: string) => {
-    onDataChange({ ...data, [field]: value });
+  const updateField = (field: keyof InvoiceData, value: string | number) => {
+    if (field === 'gstRate') {
+      const newData = { ...data, gstRate: value as number };
+      const basicAmount = data.items.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const gstAmount = Math.round(basicAmount * ((value as number) / 100));
+      const netAmount = basicAmount + gstAmount;
+      onDataChange({
+        ...newData,
+        gstAmount,
+        netAmount,
+        amountInWords: numberToWords(netAmount),
+      });
+    } else {
+      onDataChange({ ...data, [field]: value });
+    }
   };
 
   const updateNestedField = (
@@ -111,25 +128,62 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
     });
   };
 
-  // Auto-fill consignee when buyer changes (if consignee is empty)
   const handleBuyerChange = (field: string, value: string) => {
     const updates: Partial<InvoiceData> = {};
     if (field === 'buyerName') updates.buyerName = value;
     if (field === 'buyerAddress') updates.buyerAddress = value;
     if (field === 'buyerGstNo') updates.buyerGstNo = value;
     
-    // Auto-fill consignee if empty
-    if (field === 'buyerName' && !data.consigneeName) updates.consigneeName = value;
-    if (field === 'buyerAddress' && !data.consigneeAddress) updates.consigneeAddress = value;
-    if (field === 'buyerGstNo' && !data.consigneeGstNo) updates.consigneeGstNo = value;
+    // Auto-fill consignee with full text
+    if (field === 'buyerName') updates.consigneeName = value;
+    if (field === 'buyerAddress') updates.consigneeAddress = value;
+    if (field === 'buyerGstNo') updates.consigneeGstNo = value;
     
     onDataChange({ ...data, ...updates });
   };
 
+  const handleStampChange = (value: string) => {
+    setSelectedStamp(value);
+  };
+
+  const getStampUrl = () => {
+    if (!selectedStamp) return null;
+    const stamp = STAMP_OPTIONS.find(s => s.value === selectedStamp);
+    return stamp ? `src/components/img/${stamp.file}` : null;
+  };
+
+  const gstOptions = Array.from({ length: 100 }, (_, i) => i + 1);
+
   return (
     <div className="classic-invoice-container">
-      {/* Export Button */}
-      <div className="flex justify-end mb-4 no-print">
+      {/* Export Button - Web Only */}
+      <div className="flex justify-end mb-4 no-print gap-2">
+        <div className="flex items-center gap-2 mr-4">
+          <span className="text-sm font-medium">GST Rate:</span>
+          <Select value={data.gstRate.toString()} onValueChange={(v) => updateField('gstRate', parseInt(v))}>
+            <SelectTrigger className="w-20">
+              <SelectValue placeholder="18%" />
+            </SelectTrigger>
+            <SelectContent>
+              {gstOptions.map(rate => (
+                <SelectItem key={rate} value={rate.toString()}>{rate}%</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 mr-4">
+          <span className="text-sm font-medium">Stamp:</span>
+          <Select value={selectedStamp} onValueChange={handleStampChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              {STAMP_OPTIONS.map(stamp => (
+                <SelectItem key={stamp.value} value={stamp.value}>{stamp.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={onExportPDF} className="bg-blue-600 hover:bg-blue-700">
           <Download className="w-4 h-4 mr-2" />
           Store as PDF
@@ -138,7 +192,7 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
 
       {/* Invoice Content */}
       <div ref={invoiceRef} className="classic-invoice bg-white">
-        {/* Logo Section */}
+        {/* Logo Section - Right Aligned */}
         <div className="invoice-logo-section">
           <img src={LOGO_URL} alt="Coninfra Machinery" className="invoice-logo" />
         </div>
@@ -294,9 +348,10 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                     {!item.isDiscount && (
                       <Input
                         type="number"
-                        value={item.qty}
-                        onChange={(e) => updateItem(item.id, 'qty', parseFloat(e.target.value) || 0)}
+                        value={item.qty === undefined || item.qty === null ? '' : item.qty}
+                        onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? undefined : parseFloat(e.target.value))}
                         className="table-input"
+                        placeholder=""
                       />
                     )}
                   </td>
@@ -304,18 +359,20 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                     {!item.isDiscount && (
                       <Input
                         type="number"
-                        value={item.rate}
-                        onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                        value={item.rate === undefined || item.rate === null ? '' : item.rate}
+                        onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? undefined : parseFloat(e.target.value))}
                         className="table-input"
+                        placeholder=""
                       />
                     )}
                   </td>
                   <td className="col-amount">
                     <Input
                       type="number"
-                      value={item.amount}
+                      value={item.amount === 0 ? '' : item.amount}
                       onChange={(e) => updateItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
                       className={`table-input ${item.isDiscount ? 'discount-amount' : ''}`}
+                      placeholder=""
                     />
                   </td>
                   <td className="col-action no-print">
@@ -344,17 +401,6 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
               Add Discount
             </Button>
           </div>
-        </div>
-
-        {/* Special Notes */}
-        <div className="special-notes-section">
-          <Textarea
-            value={data.specialNotes}
-            onChange={(e) => updateField('specialNotes', e.target.value)}
-            className="notes-input"
-            placeholder="Please Note: Service Charges will be Extra Rs. 3500 Per Day + Travelling Expenses"
-            rows={2}
-          />
         </div>
 
         {/* Bottom Section */}
@@ -431,8 +477,12 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                 <span className="summary-label">Basic Amount</span>
                 <span className="summary-value">{formatCurrency(data.basicAmount)}</span>
               </div>
-              <div className="summary-row">
+              <div className="summary-row gst-row-web no-print">
                 <span className="summary-label">GST @ {data.gstRate}%</span>
+                <span className="summary-value">{formatCurrency(data.gstAmount)}</span>
+              </div>
+              <div className="summary-row gst-row-print print-only">
+                <span className="summary-label">GST @ 18%</span>
                 <span className="summary-value">{formatCurrency(data.gstAmount)}</span>
               </div>
               <div className="summary-row total-row">
@@ -479,9 +529,26 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
           </div>
           <div className="footer-right">
             <div className="signature-section">
-              <div className="for-company">For, CONINFRA MACHINERY PVT. LTD.</div>
-              <div className="signature-line"></div>
-              <div className="signature-label">Authorised Signatory</div>
+              {getStampUrl() ? (
+                <div className="stamp-container">
+                  <img 
+                    src={getStampUrl()!} 
+                    alt="Authorised Stamp" 
+                    className="stamp-image"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="signature-label">Authorised Signatory</div>
+                </div>
+              ) : (
+                <>
+                  <div className="for-company">For, CONINFRA MACHINERY PVT. LTD.</div>
+                  <div className="signature-name">Sweta Harit Sharma</div>
+                  <div className="signature-line"></div>
+                  <div className="signature-label">Authorised Signatory</div>
+                </>
+              )}
             </div>
           </div>
         </div>

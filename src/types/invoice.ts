@@ -3,8 +3,8 @@ export interface InvoiceItem {
   no: number;
   itemDetails: string;
   uom: string;
-  qty: number;
-  rate: number;
+   qty?: number;  // Make optional
+  rate?: number; // Make optional
   amount: number;
   isDiscount?: boolean;
   discountLabel?: string;
