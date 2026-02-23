@@ -7,6 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Download } from 'lucide-react';
 
+import riyaStamp from "@/components/img/riya-stamp.jpg";
+import shStamp from "@/components/img/sh-stamp.jpg";
+import hpStamp from "@/components/img/hp-stamp.jpg";
+import shivaniStamp from "@/components/img/shivani-stamp.jpg";
+import sssStamp from "@/components/img/sss-stamp.jpg";
+
+
 interface ClassicInvoiceProps {
   data: InvoiceData;
   onDataChange: (data: InvoiceData) => void;
@@ -16,13 +23,22 @@ interface ClassicInvoiceProps {
 const LOGO_URL = 'https://i.imghippo.com/files/RfC9405A.jpg';
 const FOOTER_URL = 'https://i.imghippo.com/files/mFd4056UY.png';
 
-const STAMP_OPTIONS = [
+/*const STAMP_OPTIONS = [
   { value: 'default', label: 'Default (Sweta Harit Sharma)', file: null },
   { value: 'riya', label: 'Riya', file: 'riya-stamp.jpg' },
   { value: 'sh', label: 'SH', file: 'sh-stamp.jpg' },
   { value: 'hp', label: 'HP', file: 'hp-stamp.jpg' },
   { value: 'shivani', label: 'Shivani', file: 'shivani-stamp.jpg' },
   { value: 'sss', label: 'SSS', file: 'sss-stamp.jpg' },
+];*/
+
+const STAMP_OPTIONS = [
+  { value: "default", label: "Default (Sweta Harit Sharma)", file: null },
+  { value: "riya", label: "Riya", file: riyaStamp },
+  { value: "sh", label: "SH", file: shStamp },
+  { value: "hp", label: "HP", file: hpStamp },
+  { value: "shivani", label: "Shivani", file: shivaniStamp },
+  { value: "sss", label: "SSS", file: sssStamp },
 ];
 
 export default function ClassicInvoice({ data, onDataChange, onExportPDF }: ClassicInvoiceProps) {
@@ -162,8 +178,8 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
   const getStampUrl = () => {
     if (!selectedStamp || selectedStamp === 'default') return null;
     const stamp = STAMP_OPTIONS.find(s => s.value === selectedStamp);
-    return stamp?.file ? `src/components/img/${stamp.file}` : null;
-  };
+     return stamp?.file || null; //
+     };
 
   const gstOptions = Array.from({ length: 100 }, (_, i) => i + 1);
 
