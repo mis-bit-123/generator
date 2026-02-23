@@ -389,7 +389,7 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                         <Input
                           type="number"
                           value={item.qty === undefined || item.qty === null ? '' : item.qty}
-                          onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onChange={(e) => updateItem(item.id, 'qty', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                           className="table-input no-print"
                           placeholder=""
                         />
@@ -403,7 +403,7 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
                         <Input
                           type="number"
                           value={item.rate === undefined || item.rate === null ? '' : item.rate}
-                          onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onChange={(e) => updateItem(item.id, 'rate', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                           className="table-input no-print"
                           placeholder=""
                         />

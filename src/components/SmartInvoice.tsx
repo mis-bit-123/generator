@@ -20,7 +20,9 @@ export default function SmartInvoice({ data, onDataChange, onExportPDF }: SmartI
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'qty' || field === 'rate') {
-          updatedItem.amount = updatedItem.qty * updatedItem.rate;
+           const qty = Number(updatedItem.qty) || 0;
+  const rate = Number(updatedItem.rate) || 0;
+  updatedItem.amount = qty * rate;
         }
         return updatedItem;
       }

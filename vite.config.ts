@@ -13,4 +13,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: "dist",     // Netlify expects this
+    emptyOutDir: true,
+  },
 })
