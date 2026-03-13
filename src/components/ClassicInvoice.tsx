@@ -255,6 +255,8 @@
 //                 value={data.yourPoDate}
 //                 onChange={(e) => updateField('yourPoDate', e.target.value)}
 //                 className="info-input"
+
+
 //               />
 //             </div>
 //           </div>
@@ -853,8 +855,11 @@ export default function ClassicInvoice({ data, onDataChange, onExportPDF }: Clas
   // ─── derived ─────────────────────────────────────────────────────────────────
   const gstOptions    = Array.from({length:100},(_,i)=>i+1);
   const regularItems  = data.items.filter(i=>!i.isDiscount&&!i.isAdvance);
-  const discountItems = data.items.filter(i=>i.isDiscount);
-  const advanceItems  = data.items.filter(i=>i.isAdvance);
+  const discountItems = data.items.filter((i) => i.isDiscount);
+const advanceItems = data.items.filter((i) => i.isAdvance);
+
+void discountItems;
+void advanceItems;
   const grossAmount   = regularItems.reduce((s,i)=>s+(i.amount||0),0);
   const discountAmt   = data.discountAmount||0;
   const advanceAmt    = data.advanceAmount||0;
