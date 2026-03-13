@@ -1,0 +1,1276 @@
+/* ========================================
+   PROFORMA INVOICE GENERATOR – App.css
+   ALL FIXES DOCUMENTED INLINE
+   ======================================== */
+
+/* ── Screen: hide print-only spans ── */
+.print-only {
+  display: none;
+}
+
+/* ── Screen: hide bank/term/company value spans (inputs show instead) ── */
+.bank-value,
+.term-value,
+.company-value {
+  display: none;
+}
+
+/* ── Screen: hide party-content (inputs show instead) ── */
+.party-content {
+  display: none;
+}
+
+/* ========================================
+   PRINT / PDF STYLES
+   ======================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    /* margin: 0 — we use position:fixed for logo/footer and padding on the
+       content wrapper to create safe zones. Setting margin:0 lets the fixed
+       elements bleed edge-to-edge like a real document header/footer. */
+    margin: 0;
+  }
+
+  /* ── Global print resets ── */
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ── Classic invoice table ── */
+  .classic-invoice-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  table.classic-invoice {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 11px !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+
+  /* ── thead repeats on every page (title, party info, column headers) ── */
+  thead {
+    display: table-header-group !important;
+  }
+  tbody {
+    display: table-row-group !important;
+  }
+  /* tfoot no longer used — footer image is a position:fixed div outside the table */
+  tfoot {
+    display: none !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FIXED HEADER — Logo image
+     position: fixed + top: 0  → renders at the TOP of EVERY printed page,
+     no matter how many pages. Exactly like Word/Acrobat running headers.
+     The logo div lives outside <table> in JSX so table pagination never clips it.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-page-logo {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    background: white !important;
+    text-align: right !important;
+    padding: 6mm 10mm 4mm !important;
+    border-bottom: 2.5px solid #c41e3a !important;
+    box-sizing: border-box !important;
+    line-height: 0 !important;
+  }
+  .invoice-page-logo img {
+    max-width: 65mm !important;
+    max-height: 18mm !important;
+    height: auto !important;
+    display: inline-block !important;
+    vertical-align: bottom !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FIXED FOOTER — Company footer image
+     position: fixed + bottom: 0  → renders at the BOTTOM of EVERY page.
+     Mirror of the logo header above.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-page-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    background: white !important;
+  }
+  .invoice-page-footer img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CONTENT SAFE ZONE
+     padding-top    = height of fixed logo header  (~27mm)
+     padding-bottom = height of fixed footer image (~33mm)
+     padding-left/right = side margins (since @page margin is 0)
+     Keeps all body content visible between header and footer on every page.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-print-content {
+    padding-top: 27mm !important;
+    padding-bottom: 33mm !important;
+    padding-left: 10mm !important;
+    padding-right: 10mm !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Remove zoom transform in print — always render at 100% scale */
+  .invoice-zoom-wrapper {
+    transform: none !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FIXED HEADER — Logo image
+     ─────────────────────────────────────────────────────────────────────────
+     position: fixed + top: 0  →  renders at the TOP of EVERY printed page,
+     no matter how many pages of content there are.
+     This is exactly how Word/Acrobat running headers work.
+     The logo div is outside <table> in the JSX so it is never clipped by
+     table pagination rules.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-page-logo {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    background: white !important;
+    text-align: right !important;
+    padding: 6mm 10mm 4mm !important;
+    border-bottom: 2.5px solid #c41e3a !important;
+    box-sizing: border-box !important;
+    line-height: 0 !important;
+  }
+  .invoice-page-logo img {
+    max-width: 65mm !important;
+    max-height: 18mm !important;
+    height: auto !important;
+    display: inline-block !important;
+    vertical-align: bottom !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FIXED FOOTER — Company footer image
+     ─────────────────────────────────────────────────────────────────────────
+     position: fixed + bottom: 0  →  renders at the BOTTOM of EVERY page.
+     Mirror image of the logo header above.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-page-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    background: white !important;
+  }
+  .invoice-page-footer img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    vertical-align: bottom !important;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CONTENT AREA — safe zone between fixed header and fixed footer
+     ─────────────────────────────────────────────────────────────────────────
+     padding-top    = height of fixed logo header   (adjust if logo is taller)
+     padding-bottom = height of fixed footer image  (adjust if footer is taller)
+     padding-left/right = page side margins (since @page margin is 0)
+     
+     IMPORTANT: If your logo image is taller/shorter, change padding-top.
+     If your footer image is taller/shorter, change padding-bottom.
+     Typical Coninfra footer ≈ 30mm tall, logo ≈ 24mm tall.
+  ═══════════════════════════════════════════════════════════════════════════ */
+  .invoice-print-content {
+    padding-top: 27mm !important;
+    padding-bottom: 33mm !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* The zoom wrapper must have no transform in print */
+  .invoice-zoom-wrapper {
+    transform: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* ── Hide action column in print ── */
+  .col-action {
+    display: none !important;
+  }
+
+  /* ── Show print-only spans ── */
+  .print-only {
+    display: inline !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+
+  /* FIX 1: Show bank/term/company value spans in print
+     (they are hidden on screen; inputs are hidden in print via input rule below) */
+  .bank-value,
+  .term-value,
+  .company-value {
+    display: inline !important;
+    font-size: 10px !important;
+    color: #000 !important;
+  }
+
+  /* FIX 2: Show party content in print (inputs are hidden) */
+  .party-content {
+    display: block !important;
+  }
+
+  /* Hide all form inputs in print */
+  input,
+  textarea,
+  button,
+  select {
+    display: none !important;
+  }
+
+  /* ── Logo section (thead td) ── */
+  .invoice-logo-section {
+    text-align: right !important;
+    padding: 10px 12px 10px 0 !important;
+    border-bottom: 2.5px solid #c41e3a !important;
+    background: white !important;
+    display: table-cell !important;
+  }
+  .invoice-logo {
+    max-width: 260px !important;
+    height: auto !important;
+    display: inline-block !important;
+  }
+
+  /* ── Title section (thead td) ── */
+  .invoice-title-section {
+    text-align: center !important;
+    padding: 10px 0 !important;
+    border-bottom: 1px solid #000 !important;
+    background: white !important;
+    display: table-cell !important;
+  }
+  .invoice-title {
+    font-size: 17px !important;
+    font-weight: bold !important;
+    letter-spacing: 3px !important;
+    margin: 0 !important;
+    color: #000 !important;
+  }
+
+  /* ── Header-info cells (thead tds) ── */
+  td.header-left {
+    padding: 8px 12px !important;
+    vertical-align: top !important;
+    border-right: 1px solid #ddd !important;
+    border-bottom: 1px solid #000 !important;
+    background: white !important;
+  }
+  td.header-right {
+    padding: 8px 12px !important;
+    vertical-align: top !important;
+    border-bottom: 1px solid #000 !important;
+    background: white !important;
+  }
+  .info-row {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 4px !important;
+  }
+  .info-label {
+    font-weight: bold !important;
+    font-size: 10.5px !important;
+    min-width: 130px !important;
+    color: #333 !important;
+  }
+
+  /* ── Party box cells (thead tds) ── */
+  td.party-box {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+    vertical-align: top !important;
+    background: white !important;
+    min-height: 100px !important;
+  }
+  td.party-box:last-of-type {
+    border-right: none !important;
+  }
+  .party-title {
+    font-weight: bold !important;
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
+    color: #333 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+  }
+  .party-line {
+    font-weight: bold !important;
+    font-size: 12px !important;
+    margin-bottom: 3px !important;
+    color: #000 !important;
+  }
+  .party-address-text {
+    font-size: 10.5px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 5px !important;
+    white-space: pre-line !important;
+    color: #333 !important;
+  }
+  .party-gst {
+    font-size: 10.5px !important;
+    font-weight: bold !important;
+    color: #444 !important;
+  }
+
+  /* ── Items table column headers (thead th) ── */
+  .items-table th,
+  table.classic-invoice thead th {
+    background-color: #f2f2f2 !important;
+    border: 1px solid #888 !important;
+    padding: 6px 4px !important;
+    font-size: 10.5px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    color: #000 !important;
+    vertical-align: middle !important;
+  }
+
+  /* ── Column widths ── */
+  .col-no     { width: 5% !important;  text-align: center !important; }
+  .col-item   { width: 42% !important; text-align: left !important; }
+  .col-uom    { width: 9% !important;  text-align: center !important; }
+  .col-qty    { width: 9% !important;  text-align: center !important; }
+  .col-rate   { width: 17% !important; text-align: right !important; }
+  .col-amount { width: 18% !important; text-align: right !important; }
+
+  /* ── tbody item tds ── */
+  table.classic-invoice tbody td {
+    border: 1px solid #aaa !important;
+    padding: 5px 5px !important;
+    vertical-align: middle !important;
+    font-size: 10.5px !important;
+    color: #000 !important;
+    background: white !important;
+  }
+  table.classic-invoice tbody tr:nth-child(even) td {
+    background: #fafafa !important;
+  }
+
+  /* ── Page break control ── */
+  table.classic-invoice tbody tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* ── tfoot cells: bottom-left (bank + terms) ── */
+  td.bottom-left {
+    padding: 10px 12px !important;
+    border-top: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+    border-bottom: 1px solid #000 !important;
+    vertical-align: top !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* ── tfoot cells: bottom-right (summary) ── */
+  td.bottom-right {
+    padding: 10px 12px !important;
+    border-top: 1px solid #000 !important;
+    border-bottom: 1px solid #000 !important;
+    vertical-align: top !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Bank details inside bottom-left */
+  .section-title {
+    font-weight: bold !important;
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 3px !important;
+    border-bottom: 1px solid #ddd !important;
+  }
+  .bank-instruction {
+    font-size: 10px !important;
+    color: #666 !important;
+    margin-bottom: 5px !important;
+    font-style: italic !important;
+  }
+  .bank-row {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 2.5px !important;
+  }
+  .bank-label {
+    font-size: 10px !important;
+    min-width: 128px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+  }
+  .terms-section {
+    margin-top: 8px !important;
+  }
+  .term-row {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 2px !important;
+  }
+  .term-label {
+    font-weight: bold !important;
+    font-size: 10px !important;
+    min-width: 64px !important;
+    color: #333 !important;
+  }
+
+  /* Summary table inside bottom-right */
+  .summary-table {
+    width: 100% !important;
+  }
+  .summary-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    padding: 4px 0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    font-size: 10.5px !important;
+    color: #000 !important;
+  }
+  .summary-label {
+    font-size: 10.5px !important;
+    color: #333 !important;
+  }
+  .summary-value {
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+    color: #000 !important;
+    min-width: 75px !important;
+    text-align: right !important;
+  }
+  .discount-summary {
+    color: #c41e3a !important;
+  }
+  .discount-value {
+    color: #c41e3a !important;
+  }
+  .advance-summary {
+    color: #1565c0 !important;
+  }
+  .advance-value {
+    color: #1565c0 !important;
+  }
+  .total-row {
+    border-top: 2px solid #000 !important;
+    border-bottom: none !important;
+    padding-top: 6px !important;
+    margin-top: 4px !important;
+  }
+  .total-row .summary-label,
+  .total-row .summary-value {
+    font-size: 11.5px !important;
+    font-weight: bold !important;
+  }
+
+  /* ── Amount in words (tfoot td) ── */
+  td.amount-words-section {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #000 !important;
+    background: #f7f7f7 !important;
+    page-break-inside: avoid !important;
+  }
+  .amount-words-label {
+    font-weight: bold !important;
+    font-size: 11px !important;
+    margin-right: 8px !important;
+    color: #333 !important;
+  }
+  .amount-words-value {
+    font-size: 11px !important;
+    font-style: italic !important;
+    text-transform: capitalize !important;
+    color: #000 !important;
+  }
+
+  /* FIX 3: footer-left td – company info on the left, with right border separator */
+  td.footer-left {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;   /* ← separates GST info from signature */
+    vertical-align: bottom !important;          /* ← aligns both sides to bottom */
+    background: white !important;
+    page-break-inside: avoid !important;
+  }
+  .company-info-row {
+    display: flex !important;
+    align-items: baseline !important;
+    margin-bottom: 2.5px !important;
+  }
+  .company-info-row .info-label {
+    min-width: 72px !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    color: #444 !important;
+  }
+  .company-value {
+    font-size: 10px !important;
+    color: #000 !important;
+  }
+
+  /* FIX 4: footer-right td – signature on the RIGHT, aligned to bottom */
+  td.footer-right {
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #000 !important;
+    vertical-align: bottom !important;          /* ← bottom-align vertically */
+    text-align: right !important;              /* ← right-align content */
+    background: white !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* FIX 5: signature section itself – right-aligned, not centered */
+  .signature-section {
+    text-align: right !important;               /* was center – now right */
+    display: inline-block !important;
+    width: 100% !important;
+  }
+  .for-company {
+    font-weight: bold !important;
+    font-size: 10.5px !important;
+    margin-bottom: 20px !important;             /* space for signature above line */
+    text-align: right !important;
+    color: #222 !important;
+  }
+  .signature-name {
+    font-size: 11px !important;
+    font-weight: bold !important;
+    text-align: right !important;
+    color: #000 !important;
+    margin-bottom: 2px !important;
+  }
+  .signature-line {
+    width: 140px !important;
+    border-top: 1px solid #000 !important;
+    margin: 0 0 3px auto !important;           /* auto left margin pushes it right */
+  }
+  .signature-label {
+    font-size: 9.5px !important;
+    text-align: right !important;
+    color: #555 !important;
+  }
+
+  /* Stamp (when selected) */
+  .stamp-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;          /* right-align stamp */
+  }
+  .stamp-image {
+    max-width: 110px !important;
+    max-height: 80px !important;
+    object-fit: contain !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* ── Footer image (tfoot td) ─────────────────────────────────────────────
+     This is the ONLY row inside <tfoot>.
+     Because tfoot = table-footer-group, this image repeats at the absolute
+     bottom of every printed page — identical to how the logo repeats at top.
+     Zero padding/margin so it bleeds edge-to-edge with no gap.
+  ────────────────────────────────────────────────────────────────────────── */
+  td.footer-image-section {
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    border: none !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+  }
+  .footer-image {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    vertical-align: bottom !important;
+  }
+
+  /* ── Discount / Advance row styling ── */
+  .discount-text {
+    color: #c41e3a !important;
+    font-weight: bold !important;
+  }
+  .advance-text {
+    color: #1565c0 !important;
+    font-weight: bold !important;
+  }
+}
+
+/* ========================================
+   SCREEN STYLES
+   ======================================== */
+
+/* ── Classic Invoice Container ── */
+/* ── Screen styles: logo header + footer image divs ─────────────────────── */
+/* ── Screen: logo + footer match the 210mm invoice table width ────────────
+   Both are centered to align with the table. They share the same
+   box-shadow so it looks like one connected sheet of paper on screen.
+──────────────────────────────────────────────────────────────────────── */
+.invoice-page-logo {
+  width: 210mm;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 20px 10px;
+  border-bottom: 2.5px solid #c41e3a;
+  background: white;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
+  box-sizing: border-box;
+}
+.invoice-page-logo img {
+  max-width: 300px;
+  max-height: 76px;
+  height: auto;
+  display: block;
+}
+
+.invoice-page-footer {
+  width: 210mm;
+  margin: 0 auto;
+  line-height: 0;
+  font-size: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+.invoice-page-footer img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.invoice-print-content {
+  /* transparent on screen — padding only active in @media print */
+}
+
+
+.classic-invoice-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Classic Invoice – the outer <table> ── */
+table.classic-invoice {
+  font-family: 'Arial', Helvetica, sans-serif;
+  font-size: 12px;
+  color: #000;
+  line-height: 1.4;
+  width: 210mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0,0,0,0.04);
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* ── Logo ── */
+.invoice-logo-section {
+  text-align: right;
+  padding: 14px 20px 12px 0;
+  border-bottom: 2.5px solid #c41e3a;
+  background: white;
+}
+.invoice-logo {
+  max-width: 300px;
+  height: auto;
+  display: inline-block;
+}
+
+/* ── Title ── */
+.invoice-title-section {
+  text-align: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #000;
+  background: white;
+}
+.invoice-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 3px;
+  color: #000;
+}
+
+/* ── Header info cells ── */
+td.header-left,
+td.header-right {
+  padding: 10px 14px;
+  border-bottom: 1px solid #000;
+  vertical-align: top;
+  background: white;
+}
+td.header-left {
+  border-right: 1px solid #ddd;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.info-label {
+  font-weight: bold;
+  min-width: 140px;
+  font-size: 11px;
+  color: #333;
+}
+.info-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  font-size: 11px;
+  height: 28px;
+  background: white;
+  border-radius: 3px;
+}
+.info-input:focus {
+  border-color: #c41e3a;
+  outline: none;
+}
+
+/* ── Party boxes ── */
+td.party-box {
+  padding: 10px 14px;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  min-height: 140px;
+  vertical-align: top;
+  background: white;
+}
+td.party-box:last-of-type {
+  border-right: none;
+}
+.party-title {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 8px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.party-line {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.party-address-text {
+  font-size: 10px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+  white-space: pre-line;
+}
+.party-gst {
+  font-size: 10px;
+  font-weight: bold;
+}
+.party-inputs {
+  display: block;
+}
+.party-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  font-size: 11px;
+  margin-bottom: 4px;
+  background: white;
+  border-radius: 3px;
+}
+.party-name { font-weight: bold; }
+.party-address { resize: vertical; min-height: 52px; }
+.gst-row {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+.gst-label {
+  font-weight: bold;
+  font-size: 10px;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+.gst-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  font-size: 10px;
+  height: 26px;
+  background: white;
+  border-radius: 3px;
+}
+
+/* ── Items table (within the outer table structure) ── */
+table.classic-invoice th {
+  background-color: #f2f2f2;
+  border: 1px solid #aaa;
+  padding: 8px 5px;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  color: #000;
+}
+table.classic-invoice tbody td {
+  border: 1px solid #bbb;
+  padding: 5px 5px;
+  vertical-align: middle;
+  background: white;
+  font-size: 11px;
+}
+table.classic-invoice tbody tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* Column widths */
+.col-no     { width: 5%;  text-align: center; }
+.col-item   { width: 42%; text-align: left; }
+.col-uom    { width: 9%;  text-align: center; }
+.col-qty    { width: 9%;  text-align: center; }
+.col-rate   { width: 17%; text-align: right; }
+.col-amount { width: 18%; text-align: right; }
+.col-action { width: 5%;  text-align: center; border: none !important; background: transparent; }
+
+.table-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  padding: 4px;
+  font-size: 11px;
+  background: white;
+  border-radius: 3px;
+}
+.table-input:focus { border-color: #c41e3a; outline: none; }
+.item-details { resize: vertical; min-height: 38px; }
+
+.discount-row td { background-color: #fff8f8 !important; }
+.advance-row  td { background-color: #f8f9ff !important; }
+
+.discount-label  { font-weight: bold; color: #c41e3a; text-align: center; }
+.discount-amount { color: #c41e3a; font-weight: bold; }
+.advance-label   { font-weight: bold; color: #1565c0; text-align: center; }
+.advance-amount  { color: #1565c0; font-weight: bold; }
+
+/* ── Add buttons row ── */
+.add-buttons {
+  padding: 8px 12px;
+  text-align: left;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+/* ── Bottom section cells ── */
+td.bottom-left {
+  padding: 12px 14px;
+  border-top: 1px solid #000;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  vertical-align: top;
+  background: white;
+}
+td.bottom-right {
+  padding: 12px 14px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  vertical-align: top;
+  background: white;
+}
+
+/* Bank details */
+.bank-details { margin-bottom: 12px; }
+.section-title {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #ddd;
+}
+.bank-instruction { font-size: 9.5px; margin-bottom: 6px; color: #666; font-style: italic; }
+.bank-row { display: flex; align-items: center; margin-bottom: 3px; }
+.bank-label { font-size: 10px; min-width: 135px; font-weight: 600; color: #333; }
+.bank-input { flex: 1; border: 1px solid #ddd; padding: 3px 6px; font-size: 10px; height: 24px; background: white; border-radius: 3px; }
+.bank-value { display: none; /* shown in print via @media rule above */ }
+
+/* Terms */
+.terms-section { margin-top: 10px; }
+.term-row { display: flex; align-items: center; margin-bottom: 3px; }
+.term-label { font-weight: bold; font-size: 10px; min-width: 70px; color: #333; }
+.term-input { flex: 1; border: 1px solid #ddd; padding: 3px 6px; font-size: 10px; height: 24px; background: white; border-radius: 3px; }
+.term-value { display: none; /* shown in print */ }
+
+/* Summary */
+.summary-table { width: 100%; }
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 11px;
+  align-items: center;
+}
+.summary-label { font-size: 11px; color: #333; }
+.summary-value {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #111;
+  min-width: 80px;
+  text-align: right;
+}
+.discount-summary { color: #c41e3a; }
+.discount-value   { color: #c41e3a; font-weight: bold; }
+.advance-summary  { color: #1565c0; }
+.advance-value    { color: #1565c0; font-weight: bold; }
+.total-row {
+  border-top: 2px solid #000;
+  border-bottom: none;
+  padding-top: 7px;
+  margin-top: 4px;
+}
+.total-row .summary-label,
+.total-row .summary-value { font-size: 12px; font-weight: bold; }
+
+/* ── Amount in words ── */
+td.amount-words-section {
+  padding: 8px 14px;
+  border-bottom: 1px solid #000;
+  background: #f8f8f8;
+}
+.amount-words-label  { font-weight: bold; font-size: 11px; margin-right: 10px; }
+.amount-words-value  { font-size: 11px; font-style: italic; text-transform: capitalize; }
+
+/* ── Footer info cells ── */
+td.footer-left {
+  padding: 10px 14px;
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+  vertical-align: bottom;
+  background: white;
+}
+td.footer-right {
+  padding: 10px 14px;
+  border-bottom: 1px solid #000;
+  vertical-align: bottom;
+  text-align: right;   /* ← right-align signatory on screen too */
+  background: white;
+}
+.company-info-row { display: flex; align-items: baseline; margin-bottom: 3px; }
+.company-info-row .info-label { min-width: 75px; font-size: 10px; font-weight: bold; }
+.company-info-input { flex: 1; max-width: 200px; border: 1px solid #ddd; padding: 3px 6px; font-size: 10px; height: 24px; background: white; border-radius: 3px; }
+.company-value { display: none; /* shown in print */ }
+
+/* ── Signature – right-aligned ── */
+.signature-section {
+  text-align: right;  /* was center – fixed */
+  display: inline-block;
+  width: 100%;
+}
+.for-company {
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 22px; /* space for actual signature */
+  color: #222;
+}
+.signature-name {
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+.signature-line {
+  width: 140px;
+  border-top: 1px solid #000;
+  margin: 0 0 4px auto; /* pushes line to right */
+}
+.signature-label { font-size: 9px; color: #555; }
+
+/* Stamp */
+.stamp-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* right-align stamp */
+}
+.stamp-image {
+  max-width: 110px;
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+/* ── Footer image ── */
+td.footer-image-section {
+  padding: 0;
+  line-height: 0;
+  font-size: 0;
+  border: none;
+}
+.footer-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Row color indicator ── */
+.row-color-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto 2px;
+}
+
+/* ── Zoom wrapper ── */
+.invoice-zoom-wrapper {
+  display: flex;
+  justify-content: center;
+  /* no top margin — logo div sits flush above the table */
+}
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+.zoom-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #475569;
+}
+.zoom-btn:hover { background: #e2e8f0; }
+.zoom-label { font-size: 12px; font-weight: 600; color: #475569; min-width: 38px; text-align: center; }
+
+/* ── Color picker popup ── */
+.color-picker-popup {
+  position: absolute;
+  z-index: 9999;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  width: 220px;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.color-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+  font-weight: 600;
+}
+.color-picker-close { background: none; border: none; font-size: 16px; cursor: pointer; color: #666; }
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  padding: 8px;
+}
+.color-swatch-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0,0,0,0.1);
+  position: relative;
+}
+.color-swatch-cell:hover { transform: scale(1.15); }
+.color-swatch-cell.selected { border: 2px solid #333; }
+.transparent-cell { border: 1px dashed #bbb !important; }
+.color-check { color: white; font-size: 11px; text-shadow: 0 0 2px #000; }
+.color-picker-custom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 6px;
+  gap: 8px;
+}
+.color-hex-input {
+  width: 70px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: monospace;
+}
+.color-preview-box { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #bbb; }
+.color-btn-cancel, .color-btn-select {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.color-btn-cancel { background: #f1f5f9; color: #475569; }
+.color-btn-select { background: #3b82f6; color: white; }
+
+/* ── Calculator Widget ── */
+.calculator-widget {
+  position: fixed;
+  background: white;
+  border: 2px solid #c41e3a;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  z-index: 9999;
+  overflow: hidden;
+}
+.calculator-header {
+  background: #c41e3a;
+  color: white;
+  padding: 10px 14px;
+  cursor: move;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+.calculator-title  { font-weight: bold; font-size: 14px; }
+.calculator-close  { background: none; border: none; color: white; cursor: pointer; font-size: 18px; line-height: 1; }
+.calculator-body   { padding: 12px; }
+.calc-expression-display {
+  width: 100%; font-size: 11px; text-align: right;
+  padding: 4px 8px; color: #999; font-family: monospace;
+  min-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.calc-result-display {
+  width: 100%; font-size: 22px; text-align: right;
+  padding: 6px 8px; border: 1px solid #eee; border-radius: 6px;
+  margin-bottom: 8px; background: #f8f9fa; font-family: monospace; color: #111;
+}
+.calculator-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.calculator-btn {
+  height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.calculator-btn:hover { background: #f1f5f9; }
+.calculator-btn.operator { background: #fff7ed; color: #c2410c; }
+.calculator-btn.clear    { background: #fef2f2; color: #991b1b; }
+.calculator-btn.equals-btn {
+  background: #c41e3a; color: white;
+}
+.calculator-btn.equals-btn:hover { background: #a01729; }
+.calculator-btn.backspace-btn { background: #fef2f2; color: #991b1b; font-size: 14px; }
+.calculator-btn.wide-btn { grid-column: span 2; }
+.calc-op-hint { font-size: 9px; color: #aaa; text-align: right; margin-top: 4px; padding: 0 2px; }
+.calc-mode-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.calc-sci-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+.calc-sci-btn {
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  background: #f8fafc;
+  font-size: 11px;
+  cursor: pointer;
+  color: #334155;
+}
+.calc-sci-btn:hover { background: #e2e8f0; }
+
+.calculator-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9998;
+}
+
+/* ========================================
+   SMART INVOICE STYLES
+   ======================================== */
+.smart-invoice-container { max-width: 1000px; margin: 0 auto; }
+.smart-invoice {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.smart-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+.smart-table { border-collapse: separate; border-spacing: 0; }
+.smart-table th { font-weight: 600; font-size: 12px; color: #475569; }
+.smart-table td { font-size: 13px; color: #334155; }
+
+/* ── Responsive ── */
+@media screen and (max-width: 900px) {
+  table.classic-invoice { width: 100%; }
+}
+@media (max-width: 768px) {
+  td.header-left, td.header-right,
+  td.party-box,
+  td.bottom-left, td.bottom-right { display: block; width: 100%; }
+}
