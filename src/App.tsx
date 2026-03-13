@@ -155,11 +155,10 @@ async function imgToBase64(src: string): Promise<string> {
 // never has to fetch anything — images always appear in the PDF.
 // ─────────────────────────────────────────────────────────────────────────────
 function buildInvoiceHTML(data: InvoiceData, opts: {
-  logoB64:   string;
-  footerB64: string;
+  logoB64: string;
   stampB64?: string;
 }): string {
-  const { logoB64, footerB64, stampB64 } = opts;
+  const { logoB64, stampB64 } = opts;
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
@@ -393,7 +392,7 @@ function App() {
       const stampB64 = rawStamp ? await imgToBase64(rawStamp) : undefined;
 
       // ── Step 2: Build content HTML (footer NOT included — drawn by jsPDF) ─
-      const html = buildInvoiceHTML(invoiceData, { logoB64, footerB64, stampB64 });
+      const html = buildInvoiceHTML(invoiceData, { logoB64, stampB64 });
 
       // ── Step 3: Measure actual footer image height in mm ──────────────────
       // We load the footer image to get its natural aspect ratio, then compute
@@ -514,14 +513,14 @@ function App() {
     const pw = window.open('', '_blank');
     if (!pw) { toast.error('Please allow popups to print'); return; }
 
-    const [logoB64, footerB64] = await Promise.all([
+    const [logoB64] = await Promise.all([
       imgToBase64(logoUrl),
       imgToBase64(footerUrl),
     ]);
     const rawStamp = getStampSrcFromDOM();
     const stampB64 = rawStamp ? await imgToBase64(rawStamp) : undefined;
 
-    let html = buildInvoiceHTML(invoiceData, { logoB64, footerB64, stampB64 });
+    let html = buildInvoiceHTML(invoiceData, { logoB64, stampB64 });
 
     // Add print @page and auto-print trigger
     html = html
