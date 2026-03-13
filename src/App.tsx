@@ -14,7 +14,7 @@ import './App.css';
 // ─── FIX: import logo & footer as ES modules (same as ClassicInvoice.tsx)
 // Vite resolves these to hashed asset URLs — same-origin, no CORS, always works.
 import logoUrl   from '@/components/img/image.png';
-import footerUrl from '@/components/img/Coninfra.New-18.Footer.png';
+import footerUrl from '@/components/img/Coninfra,New-18,Footer-Picsart-AiImageEnhancer.png';
 
 // ─── Calculator ────────────────────────────────────────────────────────────────
 interface CalculatorProps {

@@ -669,10 +669,10 @@ import logoUrl   from '@/components/img/image.png';
 import footerUrl from '@/components/img/Coninfra,New-18,Footer-Picsart-AiImageEnhancer.png';
 
 import riyaStamp    from '@/components/img/riya-stamp.jpg';
-import shStamp      from '@/components/img/sh-stamp.jpg';
+
 import hpStamp      from '@/components/img/hp-stamp.jpg';
 import shivaniStamp from '@/components/img/shivani-stamp.jpg';
-import sssStamp     from '@/components/img/sss-stamp.jpg';
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ClassicInvoiceProps {
@@ -684,10 +684,10 @@ interface ClassicInvoiceProps {
 const STAMP_OPTIONS = [
   { value: 'default',  label: 'Default (Sweta Harit Sharma)', file: null        },
   { value: 'riya',     label: 'Riya',                         file: riyaStamp    },
-  { value: 'sh',       label: 'SH',                           file: shStamp      },
+  
   { value: 'hp',       label: 'HP',                           file: hpStamp      },
   { value: 'shivani',  label: 'Shivani',                      file: shivaniStamp },
-  { value: 'sss',      label: 'SSS',                          file: sssStamp     },
+  
 ];
 
 // ─── Colour palette ───────────────────────────────────────────────────────────
